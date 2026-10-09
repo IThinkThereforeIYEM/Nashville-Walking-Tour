@@ -1,0 +1,654 @@
+<title>Music City on Foot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a letterpress show-poster masthead (Hatch Show Print), then a single reading column with the map pinned beside it on wide screens. */
+:root {
+  --paper: #f7f5ef;
+  --paper-2: #ece8dc;
+  --ink: #1d2433;
+  --ink-soft: #4d5566;
+  --red: #c42a20;
+  --mustard: #e3a92b;
+  --blue: #2b5c8a;
+  --green: #5d7f4e;
+  --rule: #d4cfc0;
+  --pin-text: #ffffff;
+  --display: "Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --body: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #151a24; --paper-2: #1f2633; --ink: #ece7da; --ink-soft: #a9afbd;
+    --red: #ec5a4c; --mustard: #f0bd4f; --blue: #79a9d6; --green: #8db37b; --rule: #343c4c; --pin-text: #151a24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #151a24; --paper-2: #1f2633; --ink: #ece7da; --ink-soft: #a9afbd;
+  --red: #ec5a4c; --mustard: #f0bd4f; --blue: #79a9d6; --green: #8db37b; --rule: #343c4c; --pin-text: #151a24;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 1.07rem; line-height: 1.6; }
+a { color: var(--blue); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--mustard); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.1; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; }
+
+/* Masthead */
+.poster { border-bottom: 6px solid var(--ink); padding-block: 28px 22px; }
+.poster .kicker { font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); }
+.poster h1 { font-size: clamp(2.6rem, 9vw, 5.6rem); letter-spacing: -.01em; margin-top: 6px; }
+.poster h1 span { color: var(--red); }
+.poster .sub { font-size: 1.2rem; max-width: 46rem; margin-top: 10px; color: var(--ink-soft); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 18px; font-family: var(--mono); font-size: .85rem; }
+.facts b { color: var(--red); font-weight: 500; }
+
+/* Two-column body */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 28px 64px; }
+@media (min-width: 980px) {
+  .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); }
+  .mapcol { order: 2; }
+  .mapcol .sticky { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+}
+.maincol { min-width: 0; max-width: 44rem; display: flex; flex-direction: column; gap: 40px; }
+
+/* Map */
+.mapbox { border: 2px solid var(--ink); background: var(--paper-2); }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.mapcap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border-top: 2px solid var(--ink); font-family: var(--mono); font-size: .75rem; color: var(--ink-soft); }
+.progress { font-family: var(--mono); font-size: .8rem; margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+.bar { flex: 1; height: 8px; background: var(--paper-2); border: 1px solid var(--rule); }
+.bar i { display: block; height: 100%; width: 0; background: var(--red); transition: width .3s; }
+.pin { cursor: pointer; }
+.pin circle { fill: var(--red); stroke: var(--paper); stroke-width: 3; }
+.pin.done circle { fill: var(--ink-soft); }
+.pin.start circle { fill: var(--blue); }
+.pin.end circle { fill: var(--green); }
+.pin text { fill: var(--pin-text); font-family: var(--mono); font-size: 15px; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.pin:hover circle, .pin:focus circle { stroke: var(--mustard); }
+.maplabel { fill: var(--ink-soft); font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.legs { margin-top: 12px; font-size: .9rem; }
+.legs a { font-family: var(--mono); font-size: .8rem; }
+
+/* Sections */
+.section-head { font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--red); border-top: 2px solid var(--ink); padding-top: 10px; margin-bottom: 10px; }
+.prose { display: flex; flex-direction: column; gap: 14px; }
+.prose h2 { font-size: 2rem; }
+.tips { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 12px 24px; }
+.tips div { border-left: 3px solid var(--mustard); padding-left: 12px; font-size: .97rem; }
+.tips b { display: block; font-family: var(--mono); font-weight: 500; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+
+.timeline { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 6px 14px; font-size: .97rem; }
+.timeline dt { font-family: var(--mono); color: var(--red); font-variant-numeric: tabular-nums; }
+.timeline dd { margin: 0; }
+
+/* Stops */
+.stop { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 16px; }
+.walk { background: var(--paper-2); border: 1px dashed var(--ink-soft); padding: 12px 14px; font-size: .97rem; display: flex; flex-direction: column; gap: 6px; }
+.walk .meta { font-family: var(--mono); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.walk .meta strong { color: var(--ink); font-weight: 500; }
+.stop-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
+.num { font-family: var(--display); font-size: 1.6rem; line-height: 1; width: 2.6rem; height: 2.6rem; display: grid; place-items: center; background: var(--red); color: var(--paper); }
+.stop.start .num { background: var(--blue); }
+.stop.end .num { background: var(--green); }
+.stop h3 { font-size: clamp(1.5rem, 4vw, 2rem); }
+.addr { font-family: var(--mono); font-size: .78rem; color: var(--ink-soft); margin-top: 6px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.badge { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--ink); }
+.badge.inside { background: var(--mustard); color: #1d2433; border-color: var(--mustard); }
+.stop p + p { margin-top: 0; }
+.look { border-left: 4px solid var(--red); padding-left: 14px; display: flex; flex-direction: column; gap: 8px; }
+.look b { font-family: var(--mono); font-weight: 500; font-size: .76rem; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+.fact { background: var(--ink); color: var(--paper); padding: 12px 14px; font-size: .95rem; }
+.fact b { font-family: var(--display); font-weight: 400; color: var(--mustard); letter-spacing: .02em; margin-right: 6px; }
+.donebox { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .8rem; color: var(--ink-soft); }
+.donebox input { width: 18px; height: 18px; accent-color: var(--red); }
+ul.tight { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; }
+
+.eat { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 14px; }
+.eat div { border: 2px solid var(--ink); padding: 12px 14px; font-size: .95rem; display: flex; flex-direction: column; gap: 4px; }
+.eat h4 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.15rem; }
+.eat .addr { margin-top: 0; }
+
+footer { font-size: .85rem; color: var(--ink-soft); border-top: 2px solid var(--ink); padding-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<header class="poster">
+  <div class="wrap">
+    <div class="kicker">A self-guided walk · Midtown → Downtown → Germantown</div>
+    <h1>Music City <span>on Foot</span></h1>
+    <p class="sub">From a 1939 soda fountain to the Mother Church of Country Music, the state capitol on its limestone hill, and a German-immigrant neighborhood ready to feed you dinner.</p>
+    <div class="facts">
+      <div><b>Distance</b> about 6 mi / 9.5 km</div>
+      <div><b>Time</b> 5–7 hrs with visits</div>
+      <div><b>Stops</b> 14 + start</div>
+      <div><b>Ends</b> Germantown, for dinner</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <aside class="mapcol">
+    <div class="sticky">
+      <div class="mapbox">
+        <svg id="map" viewBox="0 0 1000 860" role="img" aria-label="Schematic map of the walking route from Elliston Place through Music Row and downtown Nashville to Germantown"></svg>
+        <div class="mapcap"><span>Schematic map, north up. Tap a pin to jump.</span><span>~0.5 mi between grid lines</span></div>
+      </div>
+      <div class="progress"><span id="progtext">0 of 15 visited</span><div class="bar"><i id="progbar"></i></div></div>
+      <p class="legs">Turn-by-turn: each stop has a <b>Walking directions</b> link that opens Google Maps for that leg. Or open the <a id="fullroute" href="#" target="_blank" rel="noopener">whole downtown route</a> in one go.</p>
+    </div>
+  </aside>
+
+  <main class="maincol">
+
+    <section class="prose">
+      <div class="section-head">Before you start</div>
+      <h2>Orientation</h2>
+      <p>This walk follows Nashville's story in roughly the order it happened to the city's skyline. You start in Midtown, among the colleges that earned Nashville the nickname "Athens of the South." You walk east down the city's main street, Broadway, past the studios and stages that made it "Music City," then climb to the Capitol and descend into Germantown, the neighborhood built by the immigrants who arrived as the Capitol was going up.</p>
+      <p>The first two legs (to the Parthenon, then to Music Row) are the longest stretches without much to see in between. If your feet are precious, take a five-minute rideshare from the Parthenon to Union Station (Stop 3) and pick up the walk there. The downtown portion on its own is about 3.5 miles.</p>
+      <div class="tips">
+        <div><b>Hours</b>Parthenon is closed Mondays. The Capitol is open weekdays only. The State Museum is closed Mondays. Most things wind down by 4–5 pm, so keep moving in the morning.</div>
+        <div><b>Restrooms</b>Union Station Hotel lobby, the Country Music Hall of Fame, the Main Library, the State Museum, and the Farmers' Market.</div>
+        <div><b>Water &amp; shade</b>Midtown to Music Row has little shade. Downtown has plenty of places to duck in for a drink.</div>
+        <div><b>Street names</b>Fifth Avenue downtown was renamed Rep. John Lewis Way in 2021. Older signs, maps and locals may still call it 5th.</div>
+      </div>
+    </section>
+
+    <section class="prose">
+      <div class="section-head">Nashville in two minutes</div>
+      <dl class="timeline">
+        <dt>1779</dt><dd>James Robertson's party crosses the frozen Cumberland River on Christmas Day. John Donelson's flotilla of families arrives by boat in April 1780. They call their stockade Fort Nashborough.</dd>
+        <dt>1843</dt><dd>Nashville becomes Tennessee's permanent capital. Work on William Strickland's Greek Revival Capitol begins two years later.</dd>
+        <dt>1862</dt><dd>Nashville is the first Confederate state capital to fall to the Union. It becomes a fortified supply depot for the rest of the war.</dd>
+        <dt>1892</dt><dd>The Union Gospel Tabernacle opens. You'll know it as the Ryman.</dd>
+        <dt>1925</dt><dd>Radio station WSM launches the "WSM Barn Dance," soon renamed the Grand Ole Opry.</dd>
+        <dt>1950s</dt><dd>Record labels cluster on 16th and 17th Avenues South. "Music Row" and the polished "Nashville Sound" are born.</dd>
+        <dt>1960</dt><dd>Students from Fisk, Tennessee State and American Baptist College desegregate downtown lunch counters through disciplined, nonviolent sit-ins.</dd>
+        <dt>1974</dt><dd>The Opry leaves the Ryman for a suburban theme park. Lower Broadway slides into decades of decline.</dd>
+        <dt>1994</dt><dd>The Ryman reopens after restoration. Downtown's revival begins and hasn't stopped.</dd>
+      </dl>
+    </section>
+
+    <!-- STOPS -->
+    <article class="stop start" id="stop-0" data-stop="0">
+      <div class="stop-head">
+        <div class="num">S</div>
+        <div>
+          <h3>Elliston Place Soda Shop</h3>
+          <div class="addr">2105 Elliston Place · Midtown</div>
+          <div class="badges"><span class="badge">You are here</span><span class="badge">Since 1939</span></div>
+        </div>
+      </div>
+      <p>Finish that milkshake slowly. You're sitting in what's billed as Nashville's oldest continuously operating restaurant. It began as the lunch counter of the Elliston Pharmacy (look for the old pharmacy name in the tile by the original door), and became its own business in 1939. Generations of Vanderbilt students, Music Row songwriters and state legislators have eaten a meat-and-three here. In 2020 the shop nearly closed over a rent increase; the crowds that showed up to say goodbye helped save it, and it moved a few doors down into this rebuilt space with a stainless-steel fountain and tabletop jukeboxes.</p>
+      <div class="look">
+        <b>Look around</b>
+        <p>This block is the "Rock Block." <b>Exit/In</b>, a few doors away, opened in 1971 and has been one of the city's key rock clubs ever since. It's a reminder that Nashville has never been only about country music.</p>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-0"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-1" data-stop="1">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.5 mi · 10 min</strong><a class="dir" data-leg="1" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Head west (left as you exit) on Elliston Place until it meets West End Avenue. Continue west on West End. Centennial Park opens up on your right at 25th Avenue North. The Parthenon is straight ahead through the park.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">1</div>
+        <div>
+          <h3>Centennial Park &amp; the Parthenon</h3>
+          <div class="addr">2500 West End Ave · Tue–Sun ~9–4:30 · admission charged</div>
+          <div class="badges"><span class="badge inside">Worth going inside</span><span class="badge">45–60 min</span></div>
+        </div>
+      </div>
+      <p>Yes, it's a full-size replica of the Parthenon in Athens, and yes, it's a little absurd. In 1897 Tennessee threw a six-month world's fair, the Centennial Exposition, to celebrate a hundred years of statehood. Nashville already called itself the "Athens of the South" for its many colleges, so it built a Parthenon as the fair's art pavilion. It was made of plaster, wood and brick, and was meant to be temporary. Nashvillians loved it too much to tear it down. When it crumbled, the city rebuilt it in concrete between 1920 and 1931, and this is the result. It's the only full-scale reproduction of the Parthenon in the world.</p>
+      <div class="look">
+        <b>Go inside</b>
+        <p>Downstairs is a small art gallery. Upstairs is the reason to pay: <b>Athena</b>, 42 feet tall, gilded head to toe, holding a 6-foot statue of Nike in her right hand like a party favor. Local sculptor Alan LeQuire unveiled her in 1990, and she was covered in gold leaf in 2002. She's the tallest indoor sculpture in the Western world. Stand at her feet and look up at the snake curled behind her shield.</p>
+        <p>Outside, notice the bronze doors. They're the largest matching set of bronze doors in the world, each weighing about 7.5 tons.</p>
+      </div>
+      <div class="fact"><b>Spot the sculptor</b>Remember Alan LeQuire's name. On the walk out of the park you can pass his Tennessee Woman Suffrage Monument (2016), and at Stop 2 you'll meet his 38-foot dancing bronzes.</div>
+      <label class="donebox"><input type="checkbox" id="done-1"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-2" data-stop="2">
+      <div class="walk">
+        <div class="meta"><strong>Walk 1.5 mi · 30–35 min</strong><a class="dir" data-leg="2" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Return to West End Avenue and walk east (back the way you came). The leafy campus on your right is <b>Vanderbilt University</b>, founded in 1873 with a $1 million gift from shipping and railroad tycoon Cornelius Vanderbilt, who never set foot here. The whole campus is a registered arboretum; detour through it if you want shade. Around 21st Avenue, West End becomes Broadway. Near 16th–17th Avenues, turn right (south) onto <b>Music Square West</b> (17th Avenue South) and follow it about half a mile to Roy Acuff Place.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">2</div>
+        <div>
+          <h3>Music Row</h3>
+          <div class="addr">16th &amp; 17th Avenues South · RCA Studio B at 1611 Roy Acuff Pl</div>
+          <div class="badges"><span class="badge">Outside only</span><span class="badge">30 min</span></div>
+        </div>
+      </div>
+      <p>It doesn't look like much: tidy bungalows, small office blocks, a few parking lots. That's the point. Music Row is a working neighborhood, and the houses are publishing companies, labels, and studios where much of the country music you've heard was written and cut. In the 1950s, producers <b>Owen and Harold Bradley</b> set up a studio here when this was a quiet residential street. Labels followed, and the Row was born.</p>
+      <div class="look">
+        <b>Look for</b>
+        <ul class="tight">
+          <li><b>RCA Studio B</b> (corner of Music Square West and Roy Acuff Place), a plain 1957 building. Inside, Chet Atkins helped invent the "Nashville Sound," a smoother, string-laden country style built to cross over to pop radio. Elvis recorded more than 200 songs here. The Everly Brothers cut "All I Have to Do Is Dream" here, and Roy Orbison made "Only the Lonely." Dolly Parton has told the story of pulling into the lot too eagerly on her first day and driving into the wall. You can only go inside on a tour bought through the Country Music Hall of Fame (Stop 5).</li>
+          <li><b>The Quonset Hut</b>, 34 Music Square East (walk back north on 16th Avenue South). The Bradleys' 1955 studio was a surplus military Quonset hut, now hidden inside a newer building. Patsy Cline recorded "Crazy" here in 1961. Brenda Lee, Johnny Cash and Bob Dylan also recorded on this block.</li>
+          <li><b>"Musica"</b> in the roundabout at the north end of 16th Avenue South. Alan LeQuire again (see Stop 1). Nine nude dancers, 38 feet tall, unveiled in 2003. It caused exactly the uproar you'd expect in a city full of Baptist publishing houses.</li>
+        </ul>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-2"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-3" data-stop="3">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.8 mi · 15–20 min</strong><a class="dir" data-leg="3" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>From the Musica roundabout, head north to Broadway and turn right (east). Cross over the interstate. You'll see Union Station's clock tower ahead on the right, at 10th Avenue.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">3</div>
+        <div>
+          <h3>Union Station &amp; the Frist</h3>
+          <div class="addr">1001 &amp; 919 Broadway</div>
+          <div class="badges"><span class="badge inside">Lobby is free · step inside</span><span class="badge">20–60 min</span></div>
+        </div>
+      </div>
+      <p>When the L&amp;N Railroad opened <b>Union Station</b> in 1900, this rough-cut stone castle announced that Nashville had arrived as a rail hub. It's Romanesque Revival: heavy round arches, a bristling clock tower, stone that looks hewn rather than smoothed. Passenger trains stopped running in 1979. The building was nearly demolished before it was rescued as a hotel in 1986.</p>
+      <div class="look">
+        <b>Go inside</b>
+        <p>Walk into the lobby and look up. The barrel-vaulted ceiling has a long stained-glass skylight, and the old waiting room's gilded plaster details survive. In the early 1900s the lobby had pools with live alligators in them. Ask at the desk and someone will happily tell you about them.</p>
+      </div>
+      <p>Next door, the <b>Frist Art Museum</b> fills Nashville's 1934 main post office, a fine piece of stripped-classical Art Deco built right over the railroad tracks. The museum has no permanent collection, so check what's showing. Even if you skip the galleries, step into the lobby for the aluminum grilles, marble, and Deco lettering.</p>
+      <label class="donebox"><input type="checkbox" id="done-3"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-4" data-stop="4">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.2 mi · 5 min</strong><a class="dir" data-leg="4" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Continue east on Broadway. The next three blocks are a short course in Victorian architecture.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">4</div>
+        <div>
+          <h3>Broadway's Gilded Age Row</h3>
+          <div class="addr">Broadway between 9th and 7th Avenues</div>
+          <div class="badges"><span class="badge">Outside</span><span class="badge">10 min</span></div>
+        </div>
+      </div>
+      <ul class="tight">
+        <li><b>Christ Church Cathedral</b> (900 Broadway, north side), Episcopal, 1894. Victorian Gothic in rough limestone with a square tower. If the door is open, the dark wood interior and Tiffany windows are worth a quick look.</li>
+        <li><b>U.S. Customs House</b> (701 Broadway, south side). President Rutherford B. Hayes laid the cornerstone in 1877. Its pointed windows and tall tower are High Victorian Gothic, the kind of federal building meant to tell a recently defeated Southern city that Washington was back in charge.</li>
+        <li><b>Hume-Fogg High School</b> (700 Broadway, north side), 1912, Tudor Gothic. It stands on the site of the Hume School of 1855, Nashville's first public school.</li>
+      </ul>
+      <div class="fact"><b>Skyline check</b>The tower with two spires to the northeast is the AT&amp;T Building (1994). Everyone calls it the Batman Building.</div>
+      <label class="donebox"><input type="checkbox" id="done-4"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-5" data-stop="5">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.4 mi · 8 min</strong><a class="dir" data-leg="5" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Continue on Broadway to Rep. John Lewis Way (5th Avenue) and turn right. The Hall of Fame fills the block on your left, across from the huge Music City Center.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">5</div>
+        <div>
+          <h3>Country Music Hall of Fame</h3>
+          <div class="addr">222 Rep. John Lewis Way S · daily 9–5 · admission charged</div>
+          <div class="badges"><span class="badge inside">Go inside if you have 2 hrs</span><span class="badge">20 min–2.5 hrs</span></div>
+        </div>
+      </div>
+      <p>If you visit one museum in Nashville, make it this one. But even from the sidewalk the building tells a story. Its architects packed it with music symbols. The tall front windows look like <b>piano keys</b>. The swooping roof at the east end is a <b>1950s Cadillac tailfin</b>. The spire on the rotunda copies the old <b>WSM radio tower</b> that broadcast the Opry. Seen from above, the whole building makes a <b>bass clef</b>.</p>
+      <div class="look">
+        <b>Inside highlights</b>
+        <p>The Hall of Fame Rotunda, with the plaques of every member under the words "Will the Circle Be Unbroken." Elvis's gold-leaf Cadillac. Mother Maybelle Carter's guitar. If you're short on time, just go into the free lobby and the gift shop, then pop into <b>Hatch Show Print</b> at the corner of the building.</p>
+        <p><b>Hatch Show Print</b> has been printing posters from hand-set wood type since 1879. They made the posters for Opry stars, Elvis and Johnny Cash, and they still print on the same kinds of presses. The design of this page is a nod to them.</p>
+      </div>
+      <p>Across Demonbreun Street, the <b>Schermerhorn Symphony Center</b> (2006) is a neoclassical concert hall built in a city better known for fiddles. In May 2010 the Cumberland River flooded and filled its basement, destroying the organ console and two concert grand pianos. The hall was back in business within months. Facing it, the <b>Music City Walk of Fame</b> sets stars in the sidewalk for musicians of every genre.</p>
+      <label class="donebox"><input type="checkbox" id="done-5"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-6" data-stop="6">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.3 mi · 6 min</strong><a class="dir" data-leg="6" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Walk north on Rep. John Lewis Way, cross Broadway, and continue one more block. The red-brick tabernacle is on your right.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">6</div>
+        <div>
+          <h3>Ryman Auditorium</h3>
+          <div class="addr">116 Rep. John Lewis Way N · tours daily · admission charged</div>
+          <div class="badges"><span class="badge inside">Absolutely go inside</span><span class="badge">45–60 min</span></div>
+        </div>
+      </div>
+      <p>Here's the story everyone in Nashville knows. In 1885, riverboat captain <b>Thomas Ryman</b>, a hard-drinking man, went to a tent revival intending to heckle the preacher, Sam Jones. Instead he was converted on the spot. He swore to build Jones a proper tabernacle, and in 1892 he opened the <b>Union Gospel Tabernacle</b>. When Ryman died in 1904, Jones proposed renaming it for him.</p>
+      <p>To pay the bills, the hall hosted everyone: Enrico Caruso, Harry Houdini, Helen Keller, presidents and boxing matches. From 1943 to 1974 it was home to the <b>Grand Ole Opry</b>, and it became the "Mother Church of Country Music." Hank Williams made his Opry debut here in 1949 and was called back for six encores. In December 1945, when banjo player Earl Scruggs joined Bill Monroe's band on this stage, bluegrass was born. Johnny Cash met June Carter backstage.</p>
+      <div class="look">
+        <b>Go inside</b>
+        <p>Sit in the curved wooden <b>church pews</b>. They're the original seating, and they're why the acoustics are so warm. Climb to the balcony for the view down to the stage, then walk onto the stage itself if the tour allows it. Performers still say this room is the best-sounding stage in America.</p>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-6"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-7" data-stop="7">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.1 mi · 2 min</strong><a class="dir" data-leg="7" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Leave the Ryman by the alley on its south side. Across the alley is the back door of Tootsie's. Walk through to Broadway and turn left, toward the river.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">7</div>
+        <div>
+          <h3>Lower Broadway</h3>
+          <div class="addr">Broadway from Rep. John Lewis Way to 1st Ave</div>
+          <div class="badges"><span class="badge inside">Duck into a honky-tonk</span><span class="badge">30–60 min</span></div>
+        </div>
+      </div>
+      <p>During the Opry's Ryman years, stars would slip out the stage door between sets, cross that alley and drink at <b>Tootsie's Orchid Lounge</b>. Hattie "Tootsie" Bess ran it from 1960, fed starving songwriters and stuffed IOUs in a cigar box. Willie Nelson, Kris Kristofferson and Roger Miller all came through as unknowns. When the Opry left in 1974, Lower Broad became a strip of pawnshops and adult theaters. Today it's back, loud and neon. Live music runs from about 10 am, with no cover at most places. Bands play for tips.</p>
+      <div class="look">
+        <b>Look for</b>
+        <ul class="tight">
+          <li><b>Tootsie's</b>, the purple one (422 Broadway).</li>
+          <li><b>Robert's Western World</b> (416 Broadway), the most traditional of the lot. It was once a western-wear shop, and the boots still line the walls. Order the fried bologna sandwich.</li>
+          <li><b>Ernest Tubb Record Shop</b> (417 Broadway). Its neon sign has hung here since 1951, and its Midnite Jamboree radio show followed the Opry for decades. The shop has closed and reopened several times recently, so it may or may not be open.</li>
+          <li>The buildings themselves: most are late-1800s brick commercial blocks with cast-iron storefronts, built when this was the main shopping street up from the steamboat landing.</li>
+        </ul>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-7"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-8" data-stop="8">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.3 mi · 6 min</strong><a class="dir" data-leg="8" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Continue to the river end of Broadway. Cross 1st Avenue to the riverfront park, then walk north (left) along it two blocks to the log stockade.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">8</div>
+        <div>
+          <h3>Fort Nashborough &amp; the Riverfront</h3>
+          <div class="addr">170 1st Ave N · free</div>
+          <div class="badges"><span class="badge">Outside</span><span class="badge">20 min</span></div>
+        </div>
+      </div>
+      <p>This is where Nashville began. In the winter of 1779, James Robertson led a party of settlers overland and crossed the Cumberland on the ice. In April 1780 John Donelson arrived with the women and children after a brutal thousand-mile river voyage. Among them was his daughter Rachel, who later married Andrew Jackson. On this bluff they built a stockade and named it for Revolutionary War general Francis Nash. In May 1780 they signed the <b>Cumberland Compact</b>, a frontier constitution. The land was Cherokee, Chickasaw and Shawnee hunting ground, and the settlement spent its first years under constant attack.</p>
+      <p>The log fort is a reconstruction, refreshed in 2017. The interpretive panels tell the story from several sides.</p>
+      <div class="look">
+        <b>Look around</b>
+        <p>The steel truss bridge to your right is the <b>John Seigenthaler Pedestrian Bridge</b> (1909), now one of the world's longest pedestrian bridges. If you have energy, walk out to the middle for the best skyline view in town. Across the river is the NFL stadium.</p>
+        <p>Then head back via <b>Second Avenue North</b>, one block inland. Its long rows of 1870s–1890s brick warehouses backed onto the river, so goods could be hoisted straight up from the steamboats. On Christmas morning 2020, a suicide bomber's RV exploded outside the AT&amp;T building on this street, badly damaging several historic facades. Look for the restored storefronts.</p>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-8"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-9" data-stop="9">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.4 mi · 8 min</strong><a class="dir" data-leg="9" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>From Second Avenue North, turn left (west) onto Church Street and walk uphill. Between 3rd and 4th Avenues, turn right into the narrow alley under the neon arch.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">9</div>
+        <div>
+          <h3>Printers Alley</h3>
+          <div class="addr">Off Church St between 3rd &amp; 4th Aves N</div>
+          <div class="badges"><span class="badge">Outside</span><span class="badge">10 min</span></div>
+        </div>
+      </div>
+      <p>Around 1900, Nashville was one of the South's biggest publishing centers, home to big religious publishing houses, newspapers and more than a dozen print shops. Many of them were here, which gave the alley its name. As printers moved out, nightclubs moved in. Nashville didn't legalize liquor by the drink until 1967, but the clubs in this alley served it openly for decades, with a nod and a wink from the police. Burlesque and jazz shared space with country. Saxophonist Boots Randolph ran a club here for years.</p>
+      <label class="donebox"><input type="checkbox" id="done-9"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-10" data-stop="10">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.2 mi · 4 min</strong><a class="dir" data-leg="10" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Exit the alley back onto Church Street and continue west (right). Downtown Presbyterian is on the corner of Rep. John Lewis Way. The library is two blocks further, at 6th–7th Avenues.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">10</div>
+        <div>
+          <h3>Church Street &amp; the Sit-ins</h3>
+          <div class="addr">Downtown Presbyterian (154 Rep. John Lewis Way N) · Main Library (615 Church St)</div>
+          <div class="badges"><span class="badge inside">Go inside both if open</span><span class="badge">30–45 min</span></div>
+        </div>
+      </div>
+      <p><b>Downtown Presbyterian Church</b> (1849–51) is the strangest building on this walk. Its architect, William Strickland, also designed the Capitol you'll see next. Here he chose <b>Egyptian Revival</b>: lotus-topped columns, winged sun disks, and an interior painted to look like an Egyptian temple. During the Civil War, Union troops used it as a hospital. The sanctuary is often open to visitors on weekday daytimes. Try the door.</p>
+      <p>Look up Rep. John Lewis Way to the north. The <b>Woolworth building</b> at No. 221 is one of the places where Nashville's civil rights movement took off. Beginning on February 13, 1960, Black college students trained in nonviolence by James Lawson, including Diane Nash and a young John Lewis, sat at whites-only lunch counters along this street. They were spat on, beaten and arrested in waves, and more students kept coming. On April 19, 1960, after a bomb destroyed the home of their lawyer, Z. Alexander Looby, thousands marched silently to City Hall. On the steps, Diane Nash asked Mayor Ben West if he thought it was wrong to discriminate based on race. He said yes. Weeks later, on May 10, Nashville's lunch counters opened to everyone. The renamed street you've been walking on honors John Lewis.</p>
+      <div class="look">
+        <b>Go inside</b>
+        <p>The <b>Nashville Public Library</b> (2001), a classical stone building by Robert A. M. Stern, has a <b>Civil Rights Room</b> on the second floor. It overlooks Church Street, where the marches passed, and has a symbolic lunch counter with the students' rules of conduct ("Do not laugh out. Do not hold conversations with floor walker…") printed on it. It's free, quiet, and very moving.</p>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-10"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-11" data-stop="11">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.2 mi · 4 min</strong><a class="dir" data-leg="11" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>From the library, walk north on 6th Avenue two blocks to Union Street. The Hermitage Hotel is on the corner.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">11</div>
+        <div>
+          <h3>Hermitage Hotel &amp; War Memorial</h3>
+          <div class="addr">231 6th Ave N · War Memorial Auditorium at 301 6th Ave N</div>
+          <div class="badges"><span class="badge inside">Peek into the lobby</span><span class="badge">15 min</span></div>
+        </div>
+      </div>
+      <p>The <b>Hermitage Hotel</b> (1910) is Nashville's grand Beaux-Arts hotel, named for Andrew Jackson's plantation outside town. Walk politely into the lobby to see the painted-glass ceiling and marble.</p>
+      <div class="fact"><b>The War of the Roses</b>In August 1920, the 19th Amendment needed one more state to make women's suffrage the law of the land. Both sides set up headquarters in this hotel. Suffragists wore yellow roses and opponents wore red. In the Capitol up the hill, 24-year-old legislator Harry Burn wore a red rose. But he had a letter in his pocket from his mother telling him to "be a good boy" and vote yes. He did. Tennessee ratified by a single vote and became the 36th and deciding state.</div>
+      <p>Across the plaza, the <b>War Memorial Auditorium</b> (1925), a Greek Revival temple honoring World War I dead, housed the Grand Ole Opry from 1939 to 1943. The Opry moved out because its audiences were too rowdy for the building.</p>
+      <label class="donebox"><input type="checkbox" id="done-11"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-12" data-stop="12">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.2 mi · 5 min</strong><a class="dir" data-leg="12" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Cross War Memorial Plaza toward the hill. Visitors enter through the Motlow Tunnel at the foot of the hill (opposite the plaza) or by the west steps.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">12</div>
+        <div>
+          <h3>Tennessee State Capitol</h3>
+          <div class="addr">600 Dr. Martin L. King Jr. Blvd · Mon–Fri ~9–4 · free</div>
+          <div class="badges"><span class="badge inside">Go inside on weekdays</span><span class="badge">30–45 min</span></div>
+        </div>
+      </div>
+      <p>Nashville built its Capitol on the highest hill in town, and it's one of the finest Greek Revival buildings in America. It has Ionic porticoes on all four sides and a lantern tower copied from an ancient monument in Athens. Construction ran from 1845 to 1859. Much of the stone was quarried nearby, and much of the work was done by enslaved people and prison labor. Architect <b>William Strickland</b> died during construction in 1854. At his request he's <b>entombed inside the north wall</b> of his own building. Look for the plaque.</p>
+      <p>When Union troops occupied Nashville in 1862, they ringed the Capitol with cannon and cotton bales and called it Fort Andrew Johnson. After the war, Tennessee was the first Confederate state readmitted to the Union.</p>
+      <div class="look">
+        <b>Look for</b>
+        <ul class="tight">
+          <li>Inside: the restored House and Senate chambers, and the old Supreme Court room. Free self-guided visits on weekdays. Guided tours usually leave the first-floor info desk at the top of most hours.</li>
+          <li>On the east lawn: the <b>tomb of President James K. Polk</b> and his wife Sarah, moved here in 1893.</li>
+          <li>The equestrian statue of <b>Andrew Jackson</b>, by Clark Mills, the same sculptor who made the one in Lafayette Square in Washington.</li>
+          <li>The view north from the hill. The green rectangle below is your next stop, and Germantown is just beyond it.</li>
+        </ul>
+      </div>
+      <label class="donebox"><input type="checkbox" id="done-12"> Visited</label>
+    </article>
+
+    <article class="stop" id="stop-13" data-stop="13">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.5 mi · 10 min</strong><a class="dir" data-leg="13" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>Take the north steps down the Capitol hill, cross James Robertson Parkway, and walk into the long park. Walk the length of it (north). The State Museum is at the far end on the left, at Jefferson Street. The Farmers' Market runs along the park's west side.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">13</div>
+        <div>
+          <h3>Bicentennial Mall &amp; State Museum</h3>
+          <div class="addr">600 James Robertson Pkwy · Museum at 1000 Rosa L. Parks Blvd · museum free, Tue–Sun</div>
+          <div class="badges"><span class="badge inside">Museum worth an hour</span><span class="badge">30–75 min</span></div>
+        </div>
+      </div>
+      <p>Tennessee built this 19-acre mall for its 200th birthday in 1996. It's a giant civics lesson in landscape. Walk across the <b>200-foot granite map</b> of the state. Stroll past the <b>Pathway of History</b> wall. Find the <b>Rivers of Tennessee</b> fountains, 31 jets, one for each major river. At the north end, the <b>Court of Three Stars</b> has a 95-bell carillon, one bell for each of the state's counties. It plays the "Tennessee Waltz" on the hour.</p>
+      <div class="look">
+        <b>Go inside</b>
+        <p>The <b>Tennessee State Museum</b> (2018) is free and covers everything from the first people in the region to the Civil War and civil rights. Good choices if you're short on time: the Civil War gallery, and the Andrew Jackson and Sequoyah material. Check the hours. It closes around 5.</p>
+      </div>
+      <p>For a <b>late lunch</b>, the <b>Nashville Farmers' Market</b> on the mall's west side has a food hall with a dozen-plus counters: Jamaican, Mexican, Southern and more. Nashville has had a public market since the early 1800s. It used to sit on the courthouse square downtown.</p>
+      <label class="donebox"><input type="checkbox" id="done-13"> Visited</label>
+    </article>
+
+    <article class="stop end" id="stop-14" data-stop="14">
+      <div class="walk">
+        <div class="meta"><strong>Walk 0.5 mi · 10 min</strong><a class="dir" data-leg="14" target="_blank" rel="noopener">Walking directions ↗</a></div>
+        <p>From the museum, cross Jefferson Street and walk north on 6th or 5th Avenue North into Germantown's grid of brick sidewalks and Victorian houses.</p>
+      </div>
+      <div class="stop-head">
+        <div class="num">14</div>
+        <div>
+          <h3>Germantown — Dinner</h3>
+          <div class="addr">North of Jefferson St, roughly 3rd Ave to Rosa L. Parks Blvd</div>
+          <div class="badges"><span class="badge">Wander &amp; eat</span><span class="badge">The end</span></div>
+        </div>
+      </div>
+      <p>German immigrants began settling here in the 1850s, building brick and frame houses, butcher shops and breweries. It became one of Nashville's first suburbs. Their parish, the <b>Church of the Assumption</b> (1227 7th Ave N), was dedicated in 1859, and it's one of the oldest Catholic churches in the city. The neighborhood declined after World War I, when anti-German feeling ran high. Highways and urban renewal later cut it off from downtown. Restoration began in the 1970s and 80s, and today it's one of Nashville's best places to eat. Admire the <b>Italianate and Queen Anne houses</b> on 5th, 6th and 7th Avenues North as you choose a table.</p>
+      <div class="eat">
+        <div><h4>Rolf and Daughters</h4><span class="addr">700 Taylor St · dinner from 5 pm</span><p>Seasonal pasta and New American dishes in the 1870s Werthan bag mill. A Michelin Guide pick. Reserve if you can.</p></div>
+        <div><h4>Monell's</h4><span class="addr">1235 6th Ave N</span><p>Southern food served family-style at shared tables in an 1880s house. Pass the fried chicken to a stranger. Check hours; lunch and dinner times vary by day.</p></div>
+        <div><h4>Geist</h4><span class="addr">311 Jefferson St</span><p>Bar and restaurant in a 19th-century blacksmith shop, with a big garden courtyard. Good for an early drink.</p></div>
+        <div><h4>Nashville Farmers' Market</h4><span class="addr">900 Rosa L. Parks Blvd</span><p>A casual late-lunch fallback if you'd rather eat before the last half-mile.</p></div>
+      </div>
+      <div class="fact"><b>Last fact</b>The settlement's namesake, Gen. Francis Nash, was killed in 1777 at the Battle of Germantown, Pennsylvania. Your walk began with Nash and ends in Germantown.</div>
+      <p>Getting back: Germantown is a short rideshare from anywhere in the city. If you're here on a Germantown Oktoberfest weekend in October, the streets will be closed for beer and bratwurst. Check the dates.</p>
+      <label class="donebox"><input type="checkbox" id="done-14"> Visited</label>
+    </article>
+
+    <footer>
+      <p>Hours, prices and restaurant openings change. Check before you go, especially for the Parthenon (closed Mondays), the Capitol (weekdays only), and Ernest Tubb Record Shop. Walking times assume an easy pace without stops. The map is a schematic; use the walking-directions links for street-level navigation.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var stops = [
+    { n: "S", name: "Elliston Place Soda Shop", q: "Elliston Place Soda Shop, 2105 Elliston Pl, Nashville, TN", ll: [36.1497, -86.8040] },
+    { n: "1", name: "Parthenon", q: "The Parthenon, 2500 West End Ave, Nashville, TN", ll: [36.1497, -86.8133] },
+    { n: "2", name: "Music Row", q: "RCA Studio B, 1611 Roy Acuff Pl, Nashville, TN", ll: [36.1500, -86.7930] },
+    { n: "3", name: "Union Station", q: "Union Station Hotel, 1001 Broadway, Nashville, TN", ll: [36.1574, -86.7848] },
+    { n: "4", name: "Customs House", q: "701 Broadway, Nashville, TN", ll: [36.1597, -86.7815] },
+    { n: "5", name: "Country Music Hall of Fame", q: "Country Music Hall of Fame and Museum, Nashville, TN", ll: [36.1582, -86.7760] },
+    { n: "6", name: "Ryman Auditorium", q: "Ryman Auditorium, Nashville, TN", ll: [36.1612, -86.7785] },
+    { n: "7", name: "Lower Broadway", q: "Robert's Western World, 416 Broadway, Nashville, TN", ll: [36.1618, -86.7762] },
+    { n: "8", name: "Fort Nashborough", q: "Fort Nashborough, 170 1st Ave N, Nashville, TN", ll: [36.1642, -86.7738] },
+    { n: "9", name: "Printers Alley", q: "Printers Alley, Nashville, TN", ll: [36.1647, -86.7785] },
+    { n: "10", name: "Church Street", q: "Downtown Presbyterian Church, Nashville, TN", ll: [36.1636, -86.7806] },
+    { n: "11", name: "Hermitage Hotel", q: "The Hermitage Hotel, 231 6th Ave N, Nashville, TN", ll: [36.1655, -86.7818] },
+    { n: "12", name: "State Capitol", q: "Tennessee State Capitol, Nashville, TN", ll: [36.1659, -86.7843] },
+    { n: "13", name: "Bicentennial Mall", q: "Tennessee State Museum, 1000 Rosa L Parks Blvd, Nashville, TN", ll: [36.1735, -86.7875] },
+    { n: "14", name: "Germantown", q: "Monell's, 1235 6th Ave N, Nashville, TN", ll: [36.1782, -86.7862] }
+  ];
+
+  function gmap(from, to, way) {
+    var u = "https://www.google.com/maps/dir/?api=1&travelmode=walking&origin=" + encodeURIComponent(from) + "&destination=" + encodeURIComponent(to);
+    if (way && way.length) u += "&waypoints=" + encodeURIComponent(way.join("|"));
+    return u;
+  }
+  document.querySelectorAll("a.dir").forEach(function (a) {
+    var i = +a.dataset.leg;
+    a.href = gmap(stops[i - 1].q, stops[i].q);
+  });
+  document.getElementById("fullroute").href = gmap(stops[3].q, stops[14].q,
+    [stops[5].q, stops[6].q, stops[8].q, stops[9].q, stops[11].q, stops[12].q, stops[13].q]);
+
+  // Projection
+  var W = 1000, H = 860;
+  var lonMin = -86.8175, lonMax = -86.7685, latMin = 36.1455, latMax = 36.1835;
+  var kx = Math.cos(36.16 * Math.PI / 180);
+  var spanX = (lonMax - lonMin) * kx, spanY = latMax - latMin;
+  var s = Math.min(W / spanX, H / spanY);
+  var ox = (W - spanX * s) / 2, oy = (H - spanY * s) / 2;
+  function P(lat, lon) { return [ox + (lon - lonMin) * kx * s, oy + (latMax - lat) * s]; }
+  function path(pts) { return pts.map(function (p, i) { var q = P(p[0], p[1]); return (i ? "L" : "M") + q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" "); }
+
+  var NS = "http://www.w3.org/2000/svg";
+  var svg = document.getElementById("map");
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+
+  // Grid every ~0.5 mi (0.00725 deg lat)
+  var g = el("g", { stroke: "var(--rule)", "stroke-width": 1 });
+  for (var lat = latMin; lat <= latMax; lat += 0.00725) { var a = P(lat, lonMin), b = P(lat, lonMax); el("line", { x1: 0, x2: W, y1: a[1], y2: a[1] }, g); }
+  for (var lon = lonMin; lon <= lonMax; lon += 0.00725 / kx) { var c = P(latMin, lon); el("line", { x1: c[0], x2: c[0], y1: 0, y2: H }, g); }
+
+  // Parks
+  function rect(lat1, lon1, lat2, lon2, label) {
+    var p1 = P(lat1, lon1), p2 = P(lat2, lon2);
+    el("rect", { x: Math.min(p1[0], p2[0]), y: Math.min(p1[1], p2[1]), width: Math.abs(p2[0] - p1[0]), height: Math.abs(p2[1] - p1[1]), fill: "var(--green)", opacity: .22 });
+  }
+  rect(36.1525, -86.8165, 36.1495, -86.8095);  // Centennial Park
+  rect(36.1748, -86.7895, 36.1690, -86.7860);  // Bicentennial Mall
+  rect(36.1480, -86.8075, 36.1415, -86.7985);  // Vanderbilt
+
+  // Cumberland River
+  el("path", { d: path([[36.1455, -86.7705], [36.1530, -86.7712], [36.1590, -86.7722], [36.1650, -86.7728], [36.1710, -86.7740], [36.1760, -86.7765], [36.1800, -86.7790], [36.1835, -86.7800]]), fill: "none", stroke: "var(--blue)", "stroke-width": 16, opacity: .35, "stroke-linecap": "round" });
+
+  // West End / Broadway
+  el("path", { d: path([[36.1488, -86.8175], [36.1490, -86.8060], [36.1520, -86.7985], [36.1558, -86.7925], [36.1585, -86.7850], [36.1606, -86.7780], [36.1625, -86.7732]]), fill: "none", stroke: "var(--ink-soft)", "stroke-width": 5, opacity: .55 });
+
+  // Labels
+  function label(lat, lon, t, anchor) { var p = P(lat, lon); var e = el("text", { x: p[0], y: p[1], class: "maplabel", "text-anchor": anchor || "start" }); e.textContent = t; }
+  label(36.1470, -86.8160, "West End Ave");
+  label(36.1438, -86.8030, "Vanderbilt", "middle");
+  label(36.1530, -86.8130, "Centennial Park", "middle");
+  label(36.1585, -86.7905, "Broadway", "middle");
+  label(36.1530, -86.7880, "The Gulch");
+  label(36.1550, -86.7730, "SoBro", "middle");
+  label(36.1700, -86.7745, "Cumberland R.", "end");
+  label(36.1765, -86.7905, "Bicentennial Mall", "end");
+  label(36.1815, -86.7860, "Germantown", "middle");
+  label(36.1690, -86.7815, "Capitol Hill");
+  label(36.1465, -86.7895, "Music Row", "middle");
+
+  // Route
+  el("path", { d: path(stops.map(function (x) { return x.ll; })), fill: "none", stroke: "var(--red)", "stroke-width": 3.5, "stroke-dasharray": "9 7", "stroke-linejoin": "round" });
+
+  // Pins
+  var pins = [];
+  stops.forEach(function (st, i) {
+    var p = P(st.ll[0], st.ll[1]);
+    var cls = "pin" + (i === 0 ? " start" : i === stops.length - 1 ? " end" : "");
+    var gp = el("g", { class: cls, transform: "translate(" + p[0].toFixed(1) + "," + p[1].toFixed(1) + ")", tabindex: 0, role: "link", "aria-label": "Stop " + st.n + ": " + st.name });
+    el("circle", { r: 15 }, gp);
+    var t = el("text", {}, gp); t.textContent = st.n;
+    var tt = el("title", {}, gp); tt.textContent = st.name;
+    function go() { document.getElementById("stop-" + i).scrollIntoView({ block: "start" }); }
+    gp.addEventListener("click", go);
+    gp.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    pins.push(gp);
+  });
+
+  // Visited tracking (per-viewer convenience)
+  var KEY = "nash-walk-done";
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { done = {}; }
+  function render() {
+    var count = 0;
+    stops.forEach(function (_, i) {
+      var on = !!done[i];
+      if (on) count++;
+      pins[i].classList.toggle("done", on);
+      var box = document.getElementById("done-" + i);
+      if (box) box.checked = on;
+    });
+    document.getElementById("progtext").textContent = count + " of " + stops.length + " visited";
+    document.getElementById("progbar").style.width = (count / stops.length * 100) + "%";
+  }
+  stops.forEach(function (_, i) {
+    var box = document.getElementById("done-" + i);
+    if (!box) return;
+    box.addEventListener("change", function () {
+      done[i] = box.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+      render();
+    });
+  });
+  render();
+})();
+</script>
